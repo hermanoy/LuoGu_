@@ -1,0 +1,19 @@
+{
+  "name": "luogu-official-docs-2026-11-02",
+  "official_url": "https://help.luogu.com.cn/manual/luogu/problem/testcase-config",
+  "official_rules_verified": true,
+  "checked_at": "2026-11-02",
+  "source_repository": "https://github.com/luogu-dev/docs",
+  "source_commit": "9cd55c03faf4ef0d66f8dfa9558d819821c30902",
+  "document_hashes": {
+    "index.md": "768ed2e49cb495b43769502f566a9fe6d7dcf9b0becfd4e494a37506007ebe40",
+    "testcase-config.md": "e9965fceefacc4e233f89556b76dec2de24abad03780cb47f71f5157558367e8",
+    "testcase-format.md": "af21d2722ee7e980b07c4e42c1a9c5fc35860812e8a566b35edb247efbacc37e",
+    "scoring-script.md": "4f9d6a3c56e1496b97f15bde4a8fb893020a09561a217e60b0c5a4a7ee8f7e9e"
+  },
+  "note": "已核查官方公开文档源码当前 master。文档写50M/100M未定义基数，因此按十进制字节保守执行；单文件与点数为本程序资源上限。网站实际配置须上传后核验。",
+  "max_zip_bytes": 50000000,
+  "max_file_bytes": 50000000,
+  "max_total_bytes": 100000000,
+  "max_points": 100
+}

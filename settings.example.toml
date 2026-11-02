@@ -1,0 +1,11 @@
+[model]
+base_url = "https://api.deepseek.com"
+model = "deepseek-chat"
+# 可改成同一服务的其他模型，用于独立复核。
+review_model = "deepseek-chat"
+
+[generation]
+points = 20
+seed = 42
+stress = 100
+cxx = "g++"

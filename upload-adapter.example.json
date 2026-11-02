@@ -1,0 +1,19 @@
+{
+  "notice": "这些是本地测试页面的示例选择器，不是已经在洛谷生产站验证的选择器。需按本机浏览器中当前页面更新。任何字段不明确就停止，不能跳过验收。",
+  "problem_title": "h1",
+  "problem_statement": "main",
+  "file_input": "input[type=file]",
+  "submit_button": "",
+  "success_indicator": "[data-upload-complete]",
+  "rows": "table tbody tr",
+  "filename": ".filename",
+  "timeLimit": "input[name=timeLimit]",
+  "memoryLimit": "input[name=memoryLimit]",
+  "memory_unit": "KB",
+  "score": "input[name=score]",
+  "subtaskId": "input[name=subtaskId]",
+  "download_button": "a[data-download-testdata]",
+  "script_fields": {},
+  "script_save": "",
+  "script_success": ""
+}
