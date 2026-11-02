@@ -40,6 +40,11 @@ def parser():
 
 
 def main(argv=None):
+    if os.name == 'nt':
+        # Redirected stdout/stderr otherwise default to cp1252 on English Windows.
+        for stream in (sys.stdout,sys.stderr):
+            if hasattr(stream,'reconfigure'):
+                stream.reconfigure(encoding='utf-8',errors='backslashreplace')
     p=parser()
     prelim,_=p.parse_known_args(argv)
     settings=prelim.settings or Path('settings.toml')

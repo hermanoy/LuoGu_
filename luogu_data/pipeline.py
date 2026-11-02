@@ -128,7 +128,7 @@ class Pipeline:
         self.state['compiler']=version.splitlines()[0]
         names=['standard','brute']+[Path(w['file']).stem for w in load_json(self.root/'spec.json')['wrong_solutions']]
         for name in names:
-            run([compiler,'-std=c++17','-O2','-Wall','-Wextra',str(self.root/(name+'.cpp')),'-o',str(self.root/(name+'.exe'))],cwd=self.root,timeout=120,memory_mb=2048)
+            run([compiler,'-std=c++17','-O2','-Wall','-Wextra',name+'.cpp','-o',name+'.exe'],cwd=self.root,timeout=120,memory_mb=2048)
         self.mark('build',[self.root/(name+'.exe') for name in names])
 
     def generate(self):

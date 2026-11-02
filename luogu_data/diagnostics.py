@@ -36,7 +36,9 @@ def diagnose(args, *, test_api=False):
             cwd=Path(directory)/'编译检查';cwd.mkdir()
             source=cwd/'check.cpp';binary=cwd/'check.exe'
             atomic_write(source,'#include <iostream>\n#include <numeric>\nint main(){ if constexpr(sizeof(long long)>=8) std::cout << std::gcd(42,30) << "\\n"; }\n')
-            run([compiler,'-std=c++17','-O2',str(source),'-o',str(binary)],cwd=cwd,timeout=60,memory_mb=1024)
+            # GCC's Windows argv path handling can use the system code page.
+            # Keep arguments ASCII; Popen passes the Unicode cwd via CreateProcessW.
+            run([compiler,'-std=c++17','-O2',source.name,'-o',binary.name],cwd=cwd,timeout=60,memory_mb=1024)
             output,_=run([str(binary)],cwd=cwd,timeout=5,memory_mb=128)
             if output.replace('\r\n','\n')!='6\n': raise PipelineError('C++17 自检结果错误')
         checks.append({'name':'cpp17_compile_run_unicode_path','status':'passed'})

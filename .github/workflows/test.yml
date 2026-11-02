@@ -1,8 +1,11 @@
 name: Windows and Linux validation
 on: [push, pull_request, workflow_dispatch]
+env:
+  PYTHONUTF8: '1'
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
@@ -24,12 +27,16 @@ jobs:
         run: Add-Content $env:GITHUB_PATH (Join-Path $env:RUNNER_TEMP 'msys64\ucrt64\bin')
       - run: python -m pip install -e ".[upload]"
       - run: python -m playwright install --with-deps chromium
+      - name: C++17 toolchain diagnostics
+        run: python main.py --doctor --diagnostic-report outputs/doctor.json
       - run: python -m unittest discover -s tests -v
       - run: python main.py examples/problem.md --points 20 --seed 42 --stress 100 --output outputs/ci-example
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: validation-${{ runner.os }}
           path: |
+            outputs/doctor.json
             outputs/ci-example/report.md
             outputs/ci-example/testcases.zip
             outputs/ci-example/validation.json

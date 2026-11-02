@@ -1,6 +1,7 @@
 from contextlib import redirect_stdout
 import importlib.util
 import io
+import json
 import os
 from pathlib import Path
 import shutil
@@ -17,6 +18,18 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class LocalWorkflow(unittest.TestCase):
+    def test_windows_redirected_console_uses_utf8(self):
+        from types import SimpleNamespace
+        buffer=io.BytesIO()
+        stream=io.TextIOWrapper(buffer,encoding='cp1252')
+        result={'status':'passed','api_key_present':False,'message':'中文自检报告'}
+        try:
+            with patch('luogu_data.cli.os',SimpleNamespace(name='nt',environ=os.environ)),patch('sys.stdout',stream),patch('sys.stderr',io.StringIO()),patch('luogu_data.diagnostics.diagnose',return_value=result):
+                self.assertEqual(main(['--doctor']),0)
+                stream.flush()
+            self.assertIn('中文自检报告',buffer.getvalue().decode('utf-8'))
+        finally: stream.close()
+
     def test_diagnostic_url_never_exposes_credentials(self):
         url='https://user:private@example.com/v1?api_key=private#private'
         safe=safe_endpoint(url)
@@ -28,7 +41,7 @@ class LocalWorkflow(unittest.TestCase):
         args=parser().parse_args(['--doctor'])
         with patch('luogu_data.diagnostics.Client') as client:
             result=diagnose(args)
-        self.assertEqual(result['status'],'passed')
+        self.assertEqual(result['status'],'passed',json.dumps(result,ensure_ascii=False))
         self.assertEqual(result['checks'][0]['name'],'cpp17_compile_run_unicode_path')
         client.assert_not_called()
 
@@ -48,7 +61,7 @@ class LocalWorkflow(unittest.TestCase):
             result=diagnose(args,test_api=True)
         self.assertEqual(result['status'],'failed')
         self.assertEqual([c.args[1] for c in client.call_args_list],['generator','reviewer'])
-        self.assertEqual([c['status'] for c in result['checks']],['passed','passed','failed'])
+        self.assertEqual([c['status'] for c in result['checks']],['passed','passed','failed'],json.dumps(result,ensure_ascii=False))
 
     def test_watch_configuration_change_selects_new_output(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -72,22 +85,24 @@ class LocalWorkflow(unittest.TestCase):
         spec=importlib.util.spec_from_file_location('launch_under_test',ROOT/'scripts/launch.py')
         launcher=importlib.util.module_from_spec(spec);spec.loader.exec_module(launcher)
         original=Path.cwd()
-        try:
-            with tempfile.TemporaryDirectory() as directory,patch.object(launcher,'ROOT',Path(directory)),patch.dict(os.environ,{},clear=True),patch('sys.stdin.isatty',return_value=True),patch.object(launcher.getpass,'getpass',return_value='test-only-key') as prompt,patch.object(launcher,'main',side_effect=[0,0]) as command:
-                self.assertEqual(launcher.launch(),0)
-                self.assertNotIn('LLM_API_KEY',os.environ)
-                self.assertEqual(command.call_count,2)
-                self.assertEqual(list(Path(directory).iterdir()),[])
-                prompt.assert_called_once()
-        finally: os.chdir(original)
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                with patch.object(launcher,'ROOT',Path(directory)),patch.dict(os.environ,{},clear=True),patch('sys.stdin.isatty',return_value=True),patch.object(launcher.getpass,'getpass',return_value='test-only-key') as prompt,patch.object(launcher,'main',side_effect=[0,0]) as command:
+                    self.assertEqual(launcher.launch(),0)
+                    self.assertNotIn('LLM_API_KEY',os.environ)
+                    self.assertEqual(command.call_count,2)
+                    self.assertEqual(list(Path(directory).iterdir()),[])
+                    prompt.assert_called_once()
+            finally: os.chdir(original)
 
     def test_launcher_reuses_existing_key_without_prompt(self):
         spec=importlib.util.spec_from_file_location('launch_existing',ROOT/'scripts/launch.py')
         launcher=importlib.util.module_from_spec(spec);spec.loader.exec_module(launcher)
         original=Path.cwd()
-        try:
-            with tempfile.TemporaryDirectory() as directory,patch.object(launcher,'ROOT',Path(directory)),patch.dict(os.environ,{'LLM_API_KEY':'existing-test-key'},clear=True),patch.object(launcher.getpass,'getpass') as prompt,patch.object(launcher,'main',side_effect=[0,0]):
-                self.assertEqual(launcher.launch(),0)
-                self.assertEqual(os.environ['LLM_API_KEY'],'existing-test-key')
-                prompt.assert_not_called()
-        finally: os.chdir(original)
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                with patch.object(launcher,'ROOT',Path(directory)),patch.dict(os.environ,{'LLM_API_KEY':'existing-test-key'},clear=True),patch.object(launcher.getpass,'getpass') as prompt,patch.object(launcher,'main',side_effect=[0,0]):
+                    self.assertEqual(launcher.launch(),0)
+                    self.assertEqual(os.environ['LLM_API_KEY'],'existing-test-key')
+                    prompt.assert_not_called()
+            finally: os.chdir(original)
